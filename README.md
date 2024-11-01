@@ -1,4 +1,4 @@
-# High-bitrate-video-gemerator
+# High-bitrate-video-generator
 A C++ program generating video that is impossible to compress.
 
 ## Build
