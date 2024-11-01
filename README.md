@@ -6,7 +6,7 @@ Ported from the python code https://www.123684.com/s/nd0djv-S998d, originally po
 ## Usage
 With x265:
 ```
-./high_bitrate_y4m | x265 --input - --y4m --preset placebo --lossless -o high_bitrate.265
+./high_bitrate_y4m | x265 --input - --y4m --preset placebo --crf 10 -o high_bitrate.265
 ```
 
 Output to file:
