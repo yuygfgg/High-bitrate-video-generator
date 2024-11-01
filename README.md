@@ -14,7 +14,7 @@ Output to file:
 ./high_bitrate_y4m > output.y4m    
 ```
 
-Surprisingly, x265 (or x264, or whatever encoder), can't compress the video any smaller while maintaining acceptable visual quality.$$ A simple 7zip does the job much better.$$
+Surprisingly, x265 (or x264, or whatever encoder), can't compress the video any smaller while maintaining acceptable visual quality.~~A simple 7zip does the job much better.~~
 
 ## Build
 For the highest performance
