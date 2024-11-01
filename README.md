@@ -1,6 +1,8 @@
 # High-bitrate-video-generator
 A C++ program generating video that is impossible to compress.
 
+Ported from the python code https://www.123684.com/s/nd0djv-S998d, originally posted at https://www.bilibili.com/video/BV1h2SVYXEGL
+
 ## Build
 For the highest performance
 ```shell
