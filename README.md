@@ -6,12 +6,12 @@ Ported from the python code https://www.123684.com/s/nd0djv-S998d, originally po
 ## Usage
 With x265:
 ```
-./high_bitrate_y4m_optimized | x265 --input - --y4m --preset placebo --lossless -o high_bitrate.265
+./high_bitrate_y4m | x265 --input - --y4m --preset placebo --lossless -o high_bitrate.265
 ```
 
 Output to file:
 ```
-./high_bitrate_y4m_optimized_pgo > output.y4m    
+./high_bitrate_y4m > output.y4m    
 ```
 
 Surprisingly, x265 (or x264, or whatever encoder), can't compress the video any smaller while maintaining acceptable visual quality.$$ A simple 7zip does the job much better.$$
