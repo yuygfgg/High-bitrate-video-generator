@@ -22,3 +22,5 @@ Or
 ```shell
 $CXX -o high_bitrate_y4m high_bitrate_y4m.cpp -O3 -march=native -mtune=native -ffast-math -flto `pkg-config --cflags --libs opencv4`
 ```
+
+![smaller](https://github.com/user-attachments/assets/59815017-4d68-4be4-9363-7a164fe80817)
