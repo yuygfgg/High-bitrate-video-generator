@@ -28,27 +28,25 @@ Options:
 ```
 
 ## Build
-For the highest performance
-```shell
-$CXX -o high_bitrate_y4m_profile high_bitrate_y4m.cpp \
-    -O3 -march=native -mtune=native -ffast-math -flto  -fprofile-instr-generate \
-    `pkg-config --cflags --libs opencv4`
 
-LLVM_PROFILE_FILE="high_bitrate_y4m.profraw" ./high_bitrate_y4m_profile > /dev/null 2>&1
+### Prerequisites
+- CMake 3.15 or higher
+- OpenCV 4
+- A C++17 compatible compiler (GCC or Clang)
 
-llvm-profdata merge -output=high_bitrate_y4m.profdata high_bitrate_y4m.profraw
-
-$CXX -o high_bitrate_y4m_pgo high_bitrate_y4m.cpp \
-    -O3 -fprofile-instr-use=high_bitrate_y4m.profdata \
-    -march=native -mtune=native \
-    -ffast-math -flto \
-    `pkg-config --cflags --libs opencv4`
+### Normal Build
+```bash
+mkdir build && cd build
+cmake ..
+make
 ```
 
-Or
-
-```shell
-$CXX -o high_bitrate_y4m high_bitrate_y4m.cpp -O3 -march=native -mtune=native -ffast-math -flto `pkg-config --cflags --libs opencv4`
+### Build with Profile-Guided Optimization (PGO)
+For the highest performance:
+```bash
+mkdir build && cd build
+cmake -DENABLE_PGO=ON ..
+make
 ```
 
 ![smaller](https://github.com/user-attachments/assets/59815017-4d68-4be4-9363-7a164fe80817)

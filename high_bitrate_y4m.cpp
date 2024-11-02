@@ -78,10 +78,9 @@ bool parseCommandLine(int argc, char* argv[], VideoConfig& config) {
             return false;
         }
         
-        i++;  // 跳过参数值
+        i++;
     }
     
-    // 参数验证
     if (config.width <= 0 || config.height <= 0 || config.fps <= 0 || 
         config.duration <= 0 || config.batch_size <= 0 || config.num_lines < 0 ||
         config.min_thickness <= 0 || config.max_thickness < config.min_thickness) {

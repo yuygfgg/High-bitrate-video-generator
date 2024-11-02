@@ -5,3 +5,7 @@ high_bitrate_y4m_profile
 high_bitrate_y4m_pgo
 high_bitrate_y4m.profdata
 high_bitrate_y4m.profraw
+build/*
+build/
+*/.DS_Store
+.DS_Store
