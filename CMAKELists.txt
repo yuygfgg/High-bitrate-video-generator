@@ -15,19 +15,18 @@ set(COMMON_FLAGS
     -ffast-math
 )
 
-# Detect compiler and set PGO flags accordingly
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set(PROFILE_GEN_FLAGS "-fprofile-generate=${CMAKE_BINARY_DIR}/profile")
-    set(PROFILE_USE_FLAGS "-fprofile-use=${CMAKE_BINARY_DIR}/profile.profdata")
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    set(PROFILE_GEN_FLAGS "-fprofile-generate=${CMAKE_BINARY_DIR}/profile")
-    set(PROFILE_USE_FLAGS "-fprofile-use=${CMAKE_BINARY_DIR}/profile")
-endif()
+# Set PGO flags for Clang
+set(PROFILE_GEN_FLAGS "-fprofile-generate=${CMAKE_BINARY_DIR}/profile")
+set(PROFILE_USE_FLAGS "-fprofile-use=${CMAKE_BINARY_DIR}/profile.profdata")
 
 # PGO build options
 option(ENABLE_PGO "Enable Profile-Guided Optimization" OFF)
 
 if(ENABLE_PGO)
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        message(FATAL_ERROR "PGO is only supported with Clang compiler")
+    endif()
+
     # Profile generation build
     add_executable(high_bitrate_y4m_profile high_bitrate_y4m.cpp)
     target_link_libraries(high_bitrate_y4m_profile PRIVATE ${OpenCV_LIBS})
@@ -41,20 +40,13 @@ if(ENABLE_PGO)
     target_link_options(high_bitrate_y4m_profile PRIVATE ${PROFILE_GEN_FLAGS})
 
     # Add custom target to generate profile data
-    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        add_custom_target(generate_profile
-            COMMAND ${CMAKE_COMMAND} -E env LLVM_PROFILE_FILE=${CMAKE_BINARY_DIR}/profile.profraw 
-                    ./high_bitrate_y4m_profile > /dev/null 2>&1
-            COMMAND llvm-profdata merge -output=${CMAKE_BINARY_DIR}/profile.profdata 
-                    ${CMAKE_BINARY_DIR}/profile.profraw
-            DEPENDS high_bitrate_y4m_profile
-        )
-    elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-        add_custom_target(generate_profile
-            COMMAND ./high_bitrate_y4m_profile > /dev/null 2>&1
-            DEPENDS high_bitrate_y4m_profile
-        )
-    endif()
+    add_custom_target(generate_profile
+        COMMAND ${CMAKE_COMMAND} -E env LLVM_PROFILE_FILE=${CMAKE_BINARY_DIR}/profile.profraw 
+                ./high_bitrate_y4m_profile > /dev/null 2>&1
+        COMMAND llvm-profdata merge -output=${CMAKE_BINARY_DIR}/profile.profdata 
+                ${CMAKE_BINARY_DIR}/profile.profraw
+        DEPENDS high_bitrate_y4m_profile
+    )
 
     # Final PGO-optimized build
     add_executable(high_bitrate_y4m high_bitrate_y4m.cpp)
