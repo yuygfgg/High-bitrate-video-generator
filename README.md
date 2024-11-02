@@ -42,7 +42,9 @@ make
 ```
 
 ### Build with Profile-Guided Optimization (PGO)
-For the highest performance:
+
+**Automatic PGO optimization is only supported when using the clang compiler**
+
 ```bash
 mkdir build && cd build
 cmake -DENABLE_PGO=ON ..
