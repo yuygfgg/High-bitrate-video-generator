@@ -33,16 +33,16 @@ struct VideoConfig {
 void printUsage(const char* programName) {
     fprintf(stderr, "Usage: %s [options]\n"
             "Options:\n"
-            "  --width N        Video width (default: 3840)\n"
-            "  --height N       Video height (default: 2160)\n"
-            "  --fps N         Frames per second (default: 60)\n"
-            "  --duration N    Duration in seconds (default: 20)\n"
-            "  --batch N       Batch size for frame processing (default: 4)\n"
-            "  --lines N       Number of random lines per frame (default: 50)\n"
-            "  --min-thick N   Minimum line thickness (default: 1)\n"
-            "  --max-thick N   Maximum line thickness (default: 9)\n"
-            "  --threads N     Number of threads (default: auto)\n"
-            "  --seed N        Random seed (default: random)\n"
+            "  --width N      Video width (default: 3840)\n"
+            "  --height N     Video height (default: 2160)\n"
+            "  --fps N        Frames per second (default: 60)\n"
+            "  --duration N   Duration in seconds (default: 20)\n"
+            "  --batch N      Batch size for frame processing (default: 4)\n"
+            "  --lines N      Number of random lines per frame (default: 50)\n"
+            "  --min-thick N  Minimum line thickness (default: 1)\n"
+            "  --max-thick N  Maximum line thickness (default: 9)\n"
+            "  --threads N    Number of threads (default: auto)\n"
+            "  --seed N       Random seed (default: random)\n"
             "  --help         Show this help message\n",
             programName);
 }

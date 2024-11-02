@@ -18,13 +18,13 @@ Output to file:
 
 ```
 Options:
-  --width N       Width in pixels (default: 3840)
-  --height N      Height in pixels (default: 2160)
-  --fps N         FPS (default: 60)
-  --duration N    Seconds (default: 20)
-  --lines N       Lines per frame (default: 50)
-  --seed N        Random seed (default: random)
-  --threads N     Thread count (default: auto)
+  --width N      Width in pixels (default: 3840)
+  --height N     Height in pixels (default: 2160)
+  --fps N        FPS (default: 60)
+  --duration N   Seconds (default: 20)
+  --lines N      Lines per frame (default: 50)
+  --seed N       Random seed (default: random)
+  --threads N    Thread count (default: auto)
 ```
 
 ## Build
