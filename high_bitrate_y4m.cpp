@@ -9,7 +9,12 @@
 #include <queue>
 #include <mutex>
 #include <condition_variable>
+
+#ifdef __ARM_NEON__
 #include <arm_neon.h>
+#elif defined(__SSE2__)
+#include <emmintrin.h>
+#endif
 
 template<typename T>
 T* aligned_alloc(size_t size, size_t alignment = 32) {
@@ -33,52 +38,47 @@ public:
     }
 
     void generate_bytes(uint8_t* dest, size_t count) {
-        while (count >= 16) {
-            uint32x4_t a = vld1q_u32(&state_[index_]);
-            uint32x4_t b = vld1q_u32(&state_[index_ + 4]);
-
-            // xorshift
-            a = veorq_u32(a, vshlq_n_u32(a, 13));
-            a = veorq_u32(a, vshrq_n_u32(a, 17));
-            a = veorq_u32(a, vshlq_n_u32(a, 5));
-
-            b = veorq_u32(b, vshlq_n_u32(b, 13));
-            b = veorq_u32(b, vshrq_n_u32(b, 17));
-            b = veorq_u32(b, vshlq_n_u32(b, 5));
-
-            vst1q_u32(&state_[index_], a);
-            vst1q_u32(&state_[index_ + 4], b);
-
-            // 将32位数压缩到8位
-            uint16x4_t narrow1 = vmovn_u32(a);
-            uint16x4_t narrow2 = vmovn_u32(b);
-            uint16x8_t combined = vcombine_u16(narrow1, narrow2);
-            uint8x8_t narrow3 = vmovn_u16(combined);
-            uint8x16_t result = vcombine_u8(narrow3, narrow3);
-
-            vst1q_u8(dest, result);
-
-            dest += 16;
-            count -= 16;
-            index_ = (index_ + 8) & 15;
+        size_t i = 0;
+        
+#if defined(__ARM_NEON__)
+        for (; i + 16 <= count; i += 16) {
+            uint32x4_t x = vld1q_u32(&state_[index_]);
+            
+            x = veorq_u32(x, vshlq_n_u32(x, 13));
+            x = veorq_u32(x, vshrq_n_u32(x, 17));
+            x = veorq_u32(x, vshlq_n_u32(x, 5));
+            
+            vst1q_u32(&state_[index_], x);
+            vst1q_u8(dest + i, vreinterpretq_u8_u32(x));
+            
+            index_ = (index_ + 4) & 15;
         }
 
-        // 处理剩余字节
-        if (count > 0) {
-            uint32x4_t a = vld1q_u32(&state_[index_]);
-            a = veorq_u32(a, vshlq_n_u32(a, 13));
-            a = veorq_u32(a, vshrq_n_u32(a, 17));
-            a = veorq_u32(a, vshlq_n_u32(a, 5));
-            vst1q_u32(&state_[index_], a);
-
-            uint16x4_t narrow1 = vmovn_u32(a);
-            uint16x8_t combined = vcombine_u16(narrow1, narrow1);
-            uint8x8_t narrow2 = vmovn_u16(combined);
-            uint8x16_t result = vcombine_u8(narrow2, narrow2);
-
-            uint8_t temp[16];
-            vst1q_u8(temp, result);
-            std::memcpy(dest, temp, count);
+#elif defined(__SSE2__)
+        for (; i + 16 <= count; i += 16) {
+            __m128i x = _mm_load_si128((__m128i*)&state_[index_]);
+            
+            x = _mm_xor_si128(x, _mm_slli_epi32(x, 13));
+            x = _mm_xor_si128(x, _mm_srli_epi32(x, 17));
+            x = _mm_xor_si128(x, _mm_slli_epi32(x, 5));
+            
+            _mm_store_si128((__m128i*)&state_[index_], x);
+            _mm_storeu_si128((__m128i*)(dest + i), x);
+            
+            index_ = (index_ + 4) & 15;
+        }
+#endif
+        for (; i < count; ) {
+            uint32_t& x = state_[index_];
+            x ^= x << 13;
+            x ^= x >> 17;
+            x ^= x << 5;
+            
+            size_t bytes_to_copy = std::min(size_t(4), count - i);
+            std::memcpy(dest + i, &x, bytes_to_copy);
+            
+            i += bytes_to_copy;
+            index_ = (index_ + 1) & 15;
         }
     }
 
@@ -108,28 +108,28 @@ public:
 
     cv::Mat generateFrame() {
         // 使用NEON生成随机噪声
-        rng.generate_bytes(buffer.data(), buffer.size());
+        rng_.generate_bytes(buffer_.data(), buffer_.size());
 
-        cv::Mat frame(height_, width_, CV_8UC3, buffer.data());
+        cv::Mat frame(height_, width_, CV_8UC3, buffer_.data());
 
         // 添加随机线条
         for (int i = 0; i < 50; ++i) {
             cv::Point pt1(
-                rng.generate_int(0, width_ - 1),
-                rng.generate_int(0, height_ - 1)
+                rng_.generate_int(0, width_ - 1),
+                rng_.generate_int(0, height_ - 1)
             );
             cv::Point pt2(
-                rng.generate_int(0, width_ - 1),
-                rng.generate_int(0, height_ - 1)
+                rng_.generate_int(0, width_ - 1),
+                rng_.generate_int(0, height_ - 1)
             );
 
             cv::Scalar color(
-                rng.generate_int(0, 255),
-                rng.generate_int(0, 255),
-                rng.generate_int(0, 255)
+                rng_.generate_int(0, 255),
+                rng_.generate_int(0, 255),
+                rng_.generate_int(0, 255)
             );
 
-            cv::line(frame, pt1, pt2, color, rng.generate_int(1, 9));
+            cv::line(frame, pt1, pt2, color, rng_.generate_int(1, 9));
         }
 
         return frame.clone();
@@ -154,7 +154,7 @@ public:
 
     void push(cv::Mat&& frame) {
         std::unique_lock<std::mutex> lock(mutex_);
-        producer_cv.wait(lock, [this] {
+        producer_cv_.wait(lock, [this] {
             return (produced_ - consumed_) < batch_size_;
         });
 
@@ -162,13 +162,13 @@ public:
         produced_++;
 
         if (produced_ - consumed_ >= batch_size_) {
-            consumer_cv.notify_one();
+            consumer_cv_.notify_one();
         }
     }
 
     bool pop(std::vector<cv::Mat>& batch) {
         std::unique_lock<std::mutex> lock(mutex_);
-        consumer_cv.wait(lock, [this] {
+        consumer_cv_.wait(lock, [this] {
             return (produced_ - consumed_ >= batch_size_) || (done_ && produced_ > consumed_);
         });
 
@@ -184,14 +184,14 @@ public:
         }
 
         consumed_ += count;
-        producer_cv.notify_all();
+        producer_cv_.notify_all();
         return true;
     }
 
     void finish() {
         std::lock_guard<std::mutex> lock(mutex_);
         done_ = true;
-        consumer_cv.notify_all();
+        consumer_cv_.notify_all();
     }
 };
 
@@ -313,7 +313,7 @@ void generateHighBitrateVideoY4M(int duration_seconds) {
 
 int main() {
     try {
-        const int duration = 15;
+        const int duration = 20;
         generateHighBitrateVideoY4M(duration);
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
@@ -321,3 +321,18 @@ int main() {
     }
     return 0;
 }
+/*
+$CXX -o high_bitrate_y4m_profile high_bitrate_y4m.cpp \
+    -O3 -march=native -mtune=native -ffast-math -flto  -fprofile-instr-generate \
+    `pkg-config --cflags --libs opencv4`
+
+LLVM_PROFILE_FILE="high_bitrate_y4m.profraw" ./high_bitrate_y4m_profile > /dev/null 2>&1
+
+llvm-profdata merge -output=high_bitrate_y4m.profdata high_bitrate_y4m.profraw
+
+$CXX -o high_bitrate_y4m_pgo high_bitrate_y4m.cpp \
+    -O3 -fprofile-instr-use=high_bitrate_y4m.profdata \
+    -march=native -mtune=native \
+    -ffast-math -flto \
+    `pkg-config --cflags --libs opencv4`
+*/
