@@ -18,6 +18,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: install opencv
+      run: brew install opencv
+
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DENABLE_PGO=ON
 
@@ -27,5 +30,5 @@ jobs:
 
     - name: Test
       working-directory: ${{github.workspace}}/build
-      run: ./high_bitrate_y4m --duration 100 --width 7680 --height 4320 --fps 120 --lines 100
+      run: ./high_bitrate_y4m --duration 100 --width 7680 --height 4320 --fps 120 --lines 100 > /dev/null
 
