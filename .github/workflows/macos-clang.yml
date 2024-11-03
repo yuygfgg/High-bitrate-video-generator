@@ -1,16 +1,12 @@
 
-name: Macos-clang PGO
+name: Macos-clang
 
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-
-env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: Release
-
+    
 jobs:
   build:
     runs-on: macos-latest
@@ -25,7 +21,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake -DENABLE_PGO=ON ..
+        cmake ..
 
     - name: Build
       run: |
