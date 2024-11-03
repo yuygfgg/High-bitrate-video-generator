@@ -113,47 +113,47 @@ public:
     }
 
     void generate_bytes(uint8_t* dest, size_t count) {
-    size_t i = 0;
-    uint32_t temp_state[16];
-    std::memcpy(temp_state, state_.data(), sizeof(temp_state));
-    
-#if defined(__ARM_NEON__)
-    for (; i + 16 <= count; i += 16) {
-        uint32x4_t x = vld1q_u32(&temp_state[index_]);
-        x = veorq_u32(x, vshlq_n_u32(x, 13));
-        x = veorq_u32(x, vshrq_n_u32(x, 17));
-        x = veorq_u32(x, vshlq_n_u32(x, 5));
-        vst1q_u32(&temp_state[index_], x);
-        vst1q_u8(dest + i, vreinterpretq_u8_u32(x));
-        index_ = (index_ + 4) & 15;
-    }
-#elif defined(__SSE2__)
-    for (; i + 16 <= count; i += 16) {
-        __m128i x = _mm_load_si128((__m128i*)&temp_state[index_]);
-        x = _mm_xor_si128(x, _mm_slli_epi32(x, 13));
-        x = _mm_xor_si128(x, _mm_srli_epi32(x, 17));
-        x = _mm_xor_si128(x, _mm_slli_epi32(x, 5));
-        _mm_store_si128((__m128i*)&temp_state[index_], x);
-        _mm_storeu_si128((__m128i*)(dest + i), x);
-        index_ = (index_ + 4) & 15;
-    }
-#endif
-
-    while (i < count) {
-        uint32_t& x = temp_state[index_];
-        x ^= x << 13;
-        x ^= x >> 17;
-        x ^= x << 5;
+        size_t i = 0;
+        uint32_t temp_state[16];
+        std::memcpy(temp_state, state_.data(), sizeof(temp_state));
         
-        size_t bytes_to_copy = std::min(size_t(4), count - i);
-        std::memcpy(dest + i, &x, bytes_to_copy);
-        
-        i += bytes_to_copy;
-        index_ = (index_ + 1) & 15;
-    }
+    #if defined(__ARM_NEON__)
+        for (; i + 16 <= count; i += 16) {
+            uint32x4_t x = vld1q_u32(&temp_state[index_]);
+            x = veorq_u32(x, vshlq_n_u32(x, 13));
+            x = veorq_u32(x, vshrq_n_u32(x, 17));
+            x = veorq_u32(x, vshlq_n_u32(x, 5));
+            vst1q_u32(&temp_state[index_], x);
+            vst1q_u8(dest + i, vreinterpretq_u8_u32(x));
+            index_ = (index_ + 4) & 15;
+        }
+    #elif defined(__SSE2__)
+        for (; i + 16 <= count; i += 16) {
+            __m128i x = _mm_load_si128((__m128i*)&temp_state[index_]);
+            x = _mm_xor_si128(x, _mm_slli_epi32(x, 13));
+            x = _mm_xor_si128(x, _mm_srli_epi32(x, 17));
+            x = _mm_xor_si128(x, _mm_slli_epi32(x, 5));
+            _mm_store_si128((__m128i*)&temp_state[index_], x);
+            _mm_storeu_si128((__m128i*)(dest + i), x);
+            index_ = (index_ + 4) & 15;
+        }
+    #endif
 
-    std::memcpy(state_.data(), temp_state, sizeof(temp_state));
-}
+        while (i < count) {
+            uint32_t& x = temp_state[index_];
+            x ^= x << 13;
+            x ^= x >> 17;
+            x ^= x << 5;
+            
+            size_t bytes_to_copy = std::min(size_t(4), count - i);
+            std::memcpy(dest + i, &x, bytes_to_copy);
+            
+            i += bytes_to_copy;
+            index_ = (index_ + 1) & 15;
+        }
+
+        std::memcpy(state_.data(), temp_state, sizeof(temp_state));
+    }
 
     uint32_t generate_uint32() {
         uint32_t result;
